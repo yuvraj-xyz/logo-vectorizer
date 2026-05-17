@@ -1,4 +1,4 @@
-# Logo Vectorizer
+# Image Vectorizer
 
 Convert raster logos (PNG / JPEG) into production-grade vector files — SVG, EPS, and Adobe Illustrator `.ai` — with clean cubic-Bézier curves, per-color layer groups, and no embedded raster.
 
