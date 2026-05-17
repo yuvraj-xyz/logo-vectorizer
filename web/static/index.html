@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Logo Vectorizer</title>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --panel: #161922;
+      --panel-2: #1e2330;
+      --text: #e8eaf2;
+      --muted: #8c93a8;
+      --accent: #6ee7b7;
+      --accent-2: #60a5fa;
+      --danger: #f87171;
+      --border: #262b3a;
+      --radius: 10px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    header {
+      padding: 24px 32px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header h1 { margin: 0; font-size: 18px; font-weight: 600; letter-spacing: 0.3px; }
+    header .tag { font-size: 12px; color: var(--muted); }
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px;
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .panel h2 { margin: 0 0 16px 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); }
+
+    .drop {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 32px 18px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+    .drop:hover, .drop.dragover {
+      border-color: var(--accent);
+      background: var(--panel-2);
+    }
+    .drop p { margin: 8px 0 0 0; color: var(--muted); font-size: 13px; }
+    .drop strong { color: var(--text); }
+    input[type=file] { display: none; }
+
+    .field { margin-top: 18px; }
+    .field label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .field label span.value { color: var(--text); font-variant-numeric: tabular-nums; }
+    .field input[type=range] { width: 100%; accent-color: var(--accent); }
+    .field input[type=checkbox] { accent-color: var(--accent); }
+    .field select {
+      width: 100%;
+      padding: 8px;
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
+    button.primary {
+      width: 100%;
+      margin-top: 20px;
+      padding: 12px 16px;
+      background: var(--accent);
+      color: #0a0e15;
+      border: 0;
+      font-weight: 600;
+      font-size: 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: filter .15s;
+    }
+    button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    button.primary:hover:not(:disabled) { filter: brightness(1.06); }
+
+    .progress {
+      margin-top: 16px;
+      height: 6px;
+      background: var(--panel-2);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress > div {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width .25s ease-out;
+    }
+    .stage { font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+    .preview-wrap {
+      position: relative;
+      background:
+        linear-gradient(45deg, #1a1e2a 25%, transparent 25%) -8px 0,
+        linear-gradient(-45deg, #1a1e2a 25%, transparent 25%) -8px 0,
+        linear-gradient(45deg, transparent 75%, #1a1e2a 75%),
+        linear-gradient(-45deg, transparent 75%, #1a1e2a 75%);
+      background-size: 16px 16px;
+      background-color: #232838;
+      border-radius: var(--radius);
+      min-height: 480px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .preview-wrap img, .preview-wrap object { max-width: 92%; max-height: 460px; }
+    .preview-empty { color: var(--muted); font-size: 13px; }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .toggle {
+      flex: 1;
+      padding: 8px 10px;
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .toggle.active { background: var(--accent-2); color: #0a0e15; border-color: var(--accent-2); }
+
+    .downloads { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+    .downloads a {
+      padding: 8px 12px;
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 13px;
+    }
+    .downloads a:hover { border-color: var(--accent); }
+
+    .palette { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
+    .swatch { width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border); }
+
+    .error { color: var(--danger); font-size: 13px; margin-top: 12px; }
+    .info { font-size: 13px; color: var(--muted); margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Logo Vectorizer</h1>
+    <span class="tag">PNG / JPEG → SVG · EPS · AI</span>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h2>Upload</h2>
+      <div id="drop" class="drop">
+        <strong>Drop a logo here</strong>
+        <p>or click to choose · PNG or JPEG</p>
+        <input id="file" type="file" accept="image/png,image/jpeg" />
+      </div>
+      <div id="filename" class="info" style="display:none"></div>
+
+      <div class="field">
+        <label>Colors <span class="value" id="colorsValue">Auto</span></label>
+        <input id="colors" type="range" min="0" max="32" step="1" value="0" />
+      </div>
+
+      <div class="field">
+        <label>Smoothing <span class="value" id="smoothValue">1.5</span></label>
+        <input id="smoothing" type="range" min="0" max="5" step="0.1" value="1.5" />
+      </div>
+
+      <div class="field">
+        <label>Trace backend</label>
+        <select id="backend">
+          <option value="potrace">potrace (best quality)</option>
+          <option value="vtracer">vtracer (fast)</option>
+          <option value="contour">contour (fallback)</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label style="cursor:pointer">
+          <span>Denoise input</span>
+          <input id="denoise" type="checkbox" checked />
+        </label>
+      </div>
+
+      <div class="field">
+        <label style="cursor:pointer">
+          <span>Fit perfect shapes (circle, ellipse, rect, polygon)</span>
+          <input id="fitShapes" type="checkbox" checked />
+        </label>
+      </div>
+
+      <div class="field">
+        <label>Shape-fit strictness <span class="value" id="fitThreshValue">0.95</span></label>
+        <input id="fitThresh" type="range" min="0.80" max="1.00" step="0.01" value="0.95" />
+        <p class="info" style="margin-top:4px">
+          Higher = only accept near-perfect primitive fits.
+          Lower = aggressively snap to primitives even when shapes are slightly off.
+        </p>
+      </div>
+
+      <button id="go" class="primary" disabled>Vectorize</button>
+      <div class="progress"><div id="bar"></div></div>
+      <div class="stage" id="stage">Idle</div>
+      <div class="error" id="error"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Preview</h2>
+      <div class="preview-wrap" id="previewWrap">
+        <span class="preview-empty">Upload a logo to see the vectorized output</span>
+      </div>
+      <div class="controls">
+        <button class="toggle active" id="viewVector">Vector</button>
+        <button class="toggle" id="viewRaster">Raster (input)</button>
+      </div>
+      <div class="palette" id="palette"></div>
+      <div class="downloads" id="downloads"></div>
+    </section>
+  </main>
+
+  <script>
+    const drop = document.getElementById('drop');
+    const fileInput = document.getElementById('file');
+    const filename = document.getElementById('filename');
+    const go = document.getElementById('go');
+    const bar = document.getElementById('bar');
+    const stage = document.getElementById('stage');
+    const errorEl = document.getElementById('error');
+    const previewWrap = document.getElementById('previewWrap');
+    const downloads = document.getElementById('downloads');
+    const palette = document.getElementById('palette');
+    const colors = document.getElementById('colors');
+    const colorsValue = document.getElementById('colorsValue');
+    const smoothing = document.getElementById('smoothing');
+    const smoothValue = document.getElementById('smoothValue');
+    const denoise = document.getElementById('denoise');
+    const backend = document.getElementById('backend');
+    const fitShapes = document.getElementById('fitShapes');
+    const fitThresh = document.getElementById('fitThresh');
+    const fitThreshValue = document.getElementById('fitThreshValue');
+    fitThresh.addEventListener('input', () => {
+      fitThreshValue.textContent = Number(fitThresh.value).toFixed(2);
+    });
+    const viewVector = document.getElementById('viewVector');
+    const viewRaster = document.getElementById('viewRaster');
+
+    let selectedFile = null;
+    let currentJobId = null;
+
+    drop.addEventListener('click', () => fileInput.click());
+    drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('dragover'); });
+    drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
+    drop.addEventListener('drop', e => {
+      e.preventDefault();
+      drop.classList.remove('dragover');
+      if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length) handleFile(fileInput.files[0]);
+    });
+
+    function handleFile(f) {
+      const ok = /\.(png|jpe?g)$/i.test(f.name);
+      if (!ok) { showError('Only PNG and JPEG are supported.'); return; }
+      selectedFile = f;
+      filename.style.display = 'block';
+      filename.textContent = `Selected: ${f.name} (${(f.size/1024).toFixed(1)} KB)`;
+      go.disabled = false;
+      errorEl.textContent = '';
+    }
+
+    colors.addEventListener('input', () => {
+      colorsValue.textContent = colors.value === '0' ? 'Auto' : colors.value;
+    });
+    smoothing.addEventListener('input', () => {
+      smoothValue.textContent = Number(smoothing.value).toFixed(1);
+    });
+
+    go.addEventListener('click', async () => {
+      if (!selectedFile) return;
+      errorEl.textContent = '';
+      go.disabled = true;
+      bar.style.width = '0%';
+      stage.textContent = 'Uploading...';
+
+      const form = new FormData();
+      form.append('file', selectedFile);
+      form.append('colors', colors.value);
+      form.append('smoothing', smoothing.value);
+      form.append('denoise', denoise.checked ? 'true' : 'false');
+      form.append('backend', backend.value);
+      form.append('fit_shapes', fitShapes.checked ? 'true' : 'false');
+      form.append('shape_fit_threshold', fitThresh.value);
+
+      try {
+        const res = await fetch('/upload', { method: 'POST', body: form });
+        if (!res.ok) throw new Error((await res.json()).detail || res.statusText);
+        const { job_id } = await res.json();
+        currentJobId = job_id;
+        poll(job_id);
+      } catch (err) {
+        showError(err.message);
+        go.disabled = false;
+      }
+    });
+
+    async function poll(jobId) {
+      while (true) {
+        let status;
+        try {
+          status = await (await fetch(`/status/${jobId}`)).json();
+        } catch (err) {
+          showError('Status request failed');
+          go.disabled = false;
+          return;
+        }
+        bar.style.width = `${(status.progress * 100).toFixed(1)}%`;
+        stage.textContent = `Stage: ${status.status}`;
+        if (status.status === 'error') {
+          showError(status.error || 'Pipeline failed');
+          go.disabled = false;
+          return;
+        }
+        if (status.status === 'done') {
+          stage.textContent = `Done — ${status.layer_count} layers`;
+          showResult(jobId, status);
+          go.disabled = false;
+          return;
+        }
+        await new Promise(r => setTimeout(r, 350));
+      }
+    }
+
+    function showResult(jobId, status) {
+      previewWrap.innerHTML = `<object type="image/svg+xml" data="/preview/${jobId}?t=${Date.now()}"></object>`;
+      viewVector.classList.add('active');
+      viewRaster.classList.remove('active');
+
+      palette.innerHTML = '';
+      for (const hex of status.palette) {
+        const div = document.createElement('div');
+        div.className = 'swatch';
+        div.style.background = hex;
+        div.title = hex;
+        palette.appendChild(div);
+      }
+
+      downloads.innerHTML = '';
+      for (const fmt of ['svg', 'eps', 'ai']) {
+        if (status.files && status.files[fmt]) {
+          const a = document.createElement('a');
+          a.href = `/result/${jobId}/${fmt}`;
+          a.download = status.files[fmt];
+          a.textContent = `Download .${fmt.toUpperCase()}`;
+          downloads.appendChild(a);
+        }
+      }
+    }
+
+    viewVector.addEventListener('click', () => {
+      if (!currentJobId) return;
+      previewWrap.innerHTML = `<object type="image/svg+xml" data="/preview/${currentJobId}?t=${Date.now()}"></object>`;
+      viewVector.classList.add('active');
+      viewRaster.classList.remove('active');
+    });
+    viewRaster.addEventListener('click', () => {
+      if (!currentJobId) return;
+      previewWrap.innerHTML = `<img src="/source/${currentJobId}?t=${Date.now()}" alt="source raster" />`;
+      viewRaster.classList.add('active');
+      viewVector.classList.remove('active');
+    });
+
+    function showError(msg) {
+      errorEl.textContent = msg;
+      stage.textContent = 'Failed';
+    }
+  </script>
+</body>
+</html>

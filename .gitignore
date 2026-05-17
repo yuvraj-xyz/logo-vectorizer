@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+*.egg
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Project-specific
+output/
+output_*/
+tests/fixtures/*.png
+tests/fixtures/*.jpg
+
+# Secrets (never commit)
+.env
+.env.local
+*.secret
+*token*
+
+# Build artifacts
+*.eps
+*.ai
+# Keep example outputs tracked manually if needed.
+!examples/expected_output.svg
